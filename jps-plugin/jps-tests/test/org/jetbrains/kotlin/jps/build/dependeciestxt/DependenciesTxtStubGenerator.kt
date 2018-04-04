@@ -12,7 +12,7 @@ import java.io.File
 
 /**
  * Utility for generating common/platform module stub contents based on it's dependencies.
- * Files generated only for modules without any file.
+ * By default files generated only for modules without any file.
  *
  * Generated files:
  *  - for common modules: `service.kt` with:
@@ -22,19 +22,20 @@ import java.io.File
  *    - `actual fun platformDependent() = "$platformName"`
  *    - `fun platformOnly() = "$platformName only"`
  */
-class DependenciesTxtStubGenerator(val txt: DependenciesTxt, val dir: File) {
+class DependenciesTxtStubGenerator(val txt: DependenciesTxt, val dir: File, val clean: Boolean = false) {
     val moduleContents = mutableMapOf<DependenciesTxt.Module, ModuleContents>()
 
     val DependenciesTxt.Module.contents get() = moduleContents.getOrPut(this) { ModuleContents(this) }
     val DependenciesTxt.Module.capitalName get() = name.capitalizeFirstLetter()
-    val DependenciesTxt.Module.serviceKtFileName get() = "service${capitalName}.kt"
+    val DependenciesTxt.Module.serviceKtFileName get() = "service${capitalName}"
 
     class ModuleContents(val module: DependenciesTxt.Module) {
         val files = mutableListOf<File>()
     }
 
     fun generate() {
-        scanFiles()
+        if (clean) cleanFiles()
+        else scanFiles()
 
         txt.modules.forEach {
             if (it !in moduleContents) {
@@ -64,26 +65,27 @@ class DependenciesTxtStubGenerator(val txt: DependenciesTxt, val dir: File) {
     }
 
     private fun generateCommonStub(module: DependenciesTxt.Module) {
-        File(dir, "${module.name}_${module.serviceKtFileName}").writeText(
+        File(dir, "${module.name}_${module.serviceKtFileName}.kt").writeText(
             """
-            | expect fun ${module.name}_platformDependent(): String
-            | fun ${module.name}_platformIndependent() = "common"
+            |expect fun ${module.name}_platformDependent(): String
+            |fun ${module.name}_platformIndependent() = "common"
             """.trimMargin()
         )
     }
 
     private fun generatePlatformStub(module: DependenciesTxt.Module, commonModule: DependenciesTxt.Module) {
-        File(dir, "${module.name}_${commonModule.serviceKtFileName}").writeText(
+        // TODO: fix "duplicated class" compilation error and use same file name as in common
+        File(dir, "${module.name}_${commonModule.serviceKtFileName}${module.capitalName}.kt").writeText(
             """
-            | actual fun ${commonModule.name}_platformDependent(): String = "${module.name}"
-            | fun ${commonModule.name}_platformOnly() = "${module.name}"
+            |actual fun ${commonModule.name}_platformDependent(): String = "${module.name}"
+            |fun ${commonModule.name}_platformOnly() = "${module.name}"
             """.trimMargin()
         )
     }
 
     private fun scanFiles() {
         dir.listFiles().forEach { file ->
-            if (file.name.endsWith(".kt")) {
+            if (file.name.endsWith(".kt") || file.name.endsWith(".kt.new")) {
                 txt.modules.forEach { module ->
                     val prefix = "${module.name}_"
                     if (file.name.startsWith(prefix)) {
@@ -93,4 +95,14 @@ class DependenciesTxtStubGenerator(val txt: DependenciesTxt, val dir: File) {
             }
         }
     }
+
+    private fun cleanFiles() {
+        dir.listFiles().forEach { file ->
+            val name = file.name
+            if (name.endsWith(".kt") || name.endsWith(".kt.new")) {
+                file.delete()
+            }
+        }
+    }
+
 }

@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.jps.build.dependeciestxt.generated.DependenciesTxtLexer
@@ -108,6 +109,11 @@ class DependenciesTxtBuilder {
         val module = DependenciesTxt.Module(name)
         val kotlinFacetSettings = KotlinFacetSettings()
         module.kotlinFacetSettings = kotlinFacetSettings
+
+        kotlinFacetSettings.useProjectSettings = false
+        kotlinFacetSettings.compilerSettings = CompilerSettings().also {
+            it.additionalArguments = "-version -Xmulti-platform"
+        }
 
         val moduleRef = moduleRef(name)
         check(!moduleRef.defined) { "Module `$name` already defined" }

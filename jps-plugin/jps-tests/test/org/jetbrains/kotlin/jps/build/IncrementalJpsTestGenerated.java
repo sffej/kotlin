@@ -1692,49 +1692,4 @@ public class IncrementalJpsTestGenerated extends AbstractIncrementalJpsTest {
             doTest(fileName);
         }
     }
-
-    @TestMetadata("jps-plugin/testData/incremental/multiplatform/multiModule")
-    @TestDataPath("$PROJECT_ROOT")
-    @RunWith(JUnit3RunnerWithInners.class)
-    public static class MultiplatformMultiModule extends AbstractIncrementalJpsTest {
-        public void testAllFilesPresentInMultiplatformMultiModule() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("jps-plugin/testData/incremental/multiplatform/multiModule"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, true);
-        }
-
-        @TestMetadata("dependent")
-        public void testDependent() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/dependent/");
-            doTest(fileName);
-        }
-
-        @TestMetadata("multiplatformDependsOnRegular")
-        public void testMultiplatformDependsOnRegular() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/multiplatformDependsOnRegular/");
-            doTest(fileName);
-        }
-
-        @TestMetadata("onePlatformTwoCommon")
-        public void testOnePlatformTwoCommon() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/onePlatformTwoCommon/");
-            doTest(fileName);
-        }
-
-        @TestMetadata("onePlatformTwoCommonDependent")
-        public void testOnePlatformTwoCommonDependent() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/onePlatformTwoCommonDependent/");
-            doTest(fileName);
-        }
-
-        @TestMetadata("regularDependensOnMultiplatform")
-        public void testRegularDependensOnMultiplatform() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/regularDependensOnMultiplatform/");
-            doTest(fileName);
-        }
-
-        @TestMetadata("simple")
-        public void testSimple() throws Exception {
-            String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/simple/");
-            doTest(fileName);
-        }
-    }
 }

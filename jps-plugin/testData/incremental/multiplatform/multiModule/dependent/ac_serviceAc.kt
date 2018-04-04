@@ -1,2 +1,2 @@
- expect fun ac_platformDependent(): String
- fun ac_platformIndependent() = "common"
+expect fun ac_platformDependent(): String
+fun ac_platformIndependent() = "common"
