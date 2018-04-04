@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.jps.model
 
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.kotlin.jps.mpp.model.KotlinModule
 import java.io.File
 
 class KotlinCommonModule(module: JpsModule) : KotlinModule(module) {

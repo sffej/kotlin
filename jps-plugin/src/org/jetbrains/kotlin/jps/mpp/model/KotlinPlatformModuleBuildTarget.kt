@@ -3,13 +3,13 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jps.model
+package org.jetbrains.kotlin.jps.mpp.model
 
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
+import org.jetbrains.jps.builders.BuildTargetRegistry
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -20,12 +20,13 @@ import org.jetbrains.kotlin.build.JvmSourceRoot
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.jps.build.KotlinBuilderModuleScriptGenerator
+import org.jetbrains.kotlin.jps.model.KotlinCommonModule
 import org.jetbrains.kotlin.jps.targetPlatform
 import java.io.File
 
-class PlatformModuleBuildTarget(val target: ModuleBuildTarget) {
-    val module: KotlinPlatformModule = KotlinPlatformModule(target.module)
-    val exceptedBy = mutableListOf<KotlinCommonModule>()
+class KotlinPlatformModuleBuildTarget(target: ModuleBuildTarget) : AbstractMppModuleBuildTarget(target) {
+    val module = KotlinPlatformModule(target.module)
+    val expectedBy = mutableListOf<KotlinCommonModule>()
 
     init {
         findExpectedBy()
@@ -35,7 +36,7 @@ class PlatformModuleBuildTarget(val target: ModuleBuildTarget) {
         target.allDependencies.modules.forEach {
             val targetPlatform = it.targetPlatform
             if (targetPlatform == TargetPlatformKind.Common) {
-                exceptedBy.add(KotlinCommonModule(it))
+                expectedBy.add(KotlinCommonModule(it))
             }
         }
     }
@@ -48,30 +49,34 @@ class PlatformModuleBuildTarget(val target: ModuleBuildTarget) {
         }
 
     /**
-     * @param changedSourceFiles ignored for non-incremental compilation
+     * @param dirtySourceFiles ignored for non-incremental compilation
      */
-    fun findSources(changedSourceFiles: MultiMap<ModuleBuildTarget, File>) =
-        if (IncrementalCompilation.isEnabled()) changedSourceFiles.get(target).toList()
-        else {
-            mutableListOf<File>().also { result ->
-                module.addAllKotlinSourceFiles(result, target.isTests)
-                exceptedBy.forEach {
-                    it.addAllKotlinSourceFilesWithDependenciesRecursivly(result, target.isTests)
-                }
-            }
+    fun findSources(dirtySourceFiles: MultiMap<ModuleBuildTarget, File>): List<File> = mutableListOf<File>().also { result ->
+        expectedBy.forEach {
+            it.addAllKotlinSourceFilesWithDependenciesRecursivly(result, target.isTests)
         }
 
+        if (IncrementalCompilation.isEnabled()) result.addAll(dirtySourceFiles.get(target))
+        else module.addAllKotlinSourceFiles(result, target.isTests)
+    }
+
     fun findSourceRoots(context: CompileContext): List<JvmSourceRoot> {
-        val roots = context.projectDescriptor.buildRootIndex.getTargetRoots(target, context)
-        val result = ContainerUtil.newArrayList<JvmSourceRoot>()
-        for (root in roots) {
-            val file = root.rootFile
-            val prefix = root.packagePrefix
-            if (file.exists()) {
-                result.add(JvmSourceRoot(file, if (prefix.isEmpty()) null else prefix))
+        return mutableListOf<JvmSourceRoot>().also { result ->
+            expectedBy.forEach {
+                val selector =
+                    if (target.isTests) BuildTargetRegistry.ModuleTargetSelector.TEST
+                    else BuildTargetRegistry.ModuleTargetSelector.PRODUCTION
+
+                val commonTargets = context.projectDescriptor.buildTargetIndex.getModuleBasedTargets(it.module, selector)
+                commonTargets.forEach {
+                    if (it is ModuleBuildTarget) {
+                        addSourceRoots(result, it, context)
+                    }
+                }
             }
+
+            addSourceRoots(result, target, context)
         }
-        return result
     }
 
     fun findClassPathRoots(): Collection<File> {

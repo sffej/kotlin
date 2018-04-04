@@ -27,7 +27,7 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ProjectBuildException
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.kotlin.jps.model.PlatformModuleBuildTarget
+import org.jetbrains.kotlin.jps.mpp.model.KotlinPlatformModuleBuildTarget
 import org.jetbrains.kotlin.modules.KotlinModuleXmlBuilder
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -86,7 +86,7 @@ object KotlinBuilderModuleScriptGenerator {
         val logger = context.loggingManager.projectBuilderLogger
         for (target in chunk.targets) {
             val outputDir = getOutputDirSafe(target)
-            val platformModule = PlatformModuleBuildTarget(target)
+            val platformModule = KotlinPlatformModuleBuildTarget(target)
             val moduleSources = platformModule.findSources(sourceFiles)
 
             if (moduleSources.isNotEmpty() || hasRemovedFiles) {

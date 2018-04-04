@@ -3,7 +3,7 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jps.model
+package org.jetbrains.kotlin.jps.mpp.model
 
 import org.jetbrains.jps.model.module.JpsModule
 

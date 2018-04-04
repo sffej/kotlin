@@ -33,6 +33,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.kotlin.jps.mpp.model.KotlinModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class KotlinSourceFileCollector {
     }
 
     /**
-     * @deprecated use {@link org.jetbrains.kotlin.jps.model.KotlinModule}
+     * @deprecated use {@link KotlinModule}
      * @param target
      * @return
      */
@@ -131,7 +132,7 @@ public class KotlinSourceFileCollector {
     }
 
     /**
-     * @deprecated use {@link org.jetbrains.kotlin.jps.model.KotlinModule}
+     * @deprecated use {@link KotlinModule}
      * @param target
      * @return
      */
