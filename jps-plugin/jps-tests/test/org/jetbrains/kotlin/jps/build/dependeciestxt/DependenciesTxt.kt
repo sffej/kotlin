@@ -62,6 +62,15 @@ class DependenciesTxtBuilder {
     class ModuleRef(name: String) {
         var defined: Boolean = false
         var actual: DependenciesTxt.Module = DependenciesTxt.Module(name)
+
+        fun build(): DependenciesTxt.Module {
+            val result = actual
+            val kotlinFacetSettings = result.kotlinFacetSettings
+            if (kotlinFacetSettings != null) {
+                kotlinFacetSettings.implementedModuleNames = result.dependencies.filter { it.expectedBy }.map { it.to.name }
+            }
+            return result
+        }
     }
 
     /**
@@ -91,9 +100,11 @@ class DependenciesTxtBuilder {
             }
         }
 
+        // dependencies build is required for module.build() (module.dependencies will be filled)
+        val dependencies = dependencies.map { it.build() }
         return DependenciesTxt(
-            modules.map { it.value.actual },
-            dependencies.map { it.build() }
+            modules.values.map { it.build() },
+            dependencies
         )
     }
 
