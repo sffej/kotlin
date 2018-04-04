@@ -3,7 +3,9 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.incremental
+package org.jetbrains.kotlin.jps.build
 
-class AbstractIncrementalMultiplatformRunnerTest {
+abstract class AbstractMultiplatformJpsTest :
+    AbstractIncrementalJpsTest(allowNoFilesWithSuffixInTestData = true) {
+
 }
