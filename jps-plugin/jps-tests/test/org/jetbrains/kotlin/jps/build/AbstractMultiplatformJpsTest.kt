@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.jps.build
 
 abstract class AbstractMultiplatformJpsTest :
-    AbstractIncrementalJpsTest(allowNoFilesWithSuffixInTestData = true) {
+    AbstractIncrementalJpsTest(
+        allowNoFilesWithSuffixInTestData = true,
+        allowNoBuildLogFileInTestData = true
+    ) {
 
 }
