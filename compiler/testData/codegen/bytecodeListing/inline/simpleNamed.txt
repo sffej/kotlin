@@ -1,0 +1,5 @@
+@kotlin.Metadata
+public final class SimpleNamedKt {
+    private final static method simple$$forInline(p0: java.lang.Object): java.lang.Object
+    private final static method simple(p0: java.lang.Object): java.lang.Object
+}

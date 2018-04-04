@@ -1,0 +1,1 @@
+suspend inline fun simple() {}

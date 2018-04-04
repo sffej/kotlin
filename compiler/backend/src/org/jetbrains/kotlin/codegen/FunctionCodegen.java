@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.codegen.binding.CodegenBinding;
 import org.jetbrains.kotlin.codegen.context.*;
 import org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenUtilKt;
 import org.jetbrains.kotlin.codegen.coroutines.SuspendFunctionGenerationStrategy;
+import org.jetbrains.kotlin.codegen.coroutines.SuspendInlineFunctionGenerationStrategy;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.config.JvmTarget;
@@ -133,7 +134,14 @@ public class FunctionCodegen {
                 );
             }
             else {
-                strategy = new FunctionGenerationStrategy.FunctionDefault(state, function);
+                strategy = new SuspendInlineFunctionGenerationStrategy(
+                        state,
+                        CoroutineCodegenUtilKt.<FunctionDescriptor>unwrapInitialDescriptorForSuspendFunction(functionDescriptor),
+                        function,
+                        v.getThisName(),
+                        state.getConstructorCallNormalizationMode(),
+                        this
+                );
             }
 
             generateMethod(JvmDeclarationOriginKt.OtherOrigin(function, functionDescriptor), functionDescriptor, strategy);
@@ -195,12 +203,12 @@ public class FunctionCodegen {
 
         MethodVisitor mv =
                 strategy.wrapMethodVisitor(
-                        v.newMethod(origin,
-                                    flags,
-                                    asmMethod.getName(),
-                                    asmMethod.getDescriptor(),
-                                    jvmSignature.getGenericsSignature(),
-                                    getThrownExceptions(functionDescriptor, typeMapper)
+                        newMethod(origin,
+                                  flags,
+                                  asmMethod.getName(),
+                                  asmMethod.getDescriptor(),
+                                  jvmSignature.getGenericsSignature(),
+                                  getThrownExceptions(functionDescriptor, typeMapper)
                         ),
                         flags, asmMethod.getName(),
                         asmMethod.getDescriptor()
@@ -245,6 +253,18 @@ public class FunctionCodegen {
                     origin, functionDescriptor, methodContext, strategy, mv, jvmSignature, staticInCompanionObject
             );
         }
+    }
+
+    @NotNull
+    public MethodVisitor newMethod(
+            @NotNull JvmDeclarationOrigin origin,
+            int access,
+            @NotNull String name,
+            @NotNull String desc,
+            @Nullable String signature,
+            @Nullable String[] exceptions
+    ) {
+        return v.newMethod(origin, access, name, desc, signature, exceptions);
     }
 
     private static boolean shouldDelegateMethodBodyToInlineClass(
