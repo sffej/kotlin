@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.caches.lightClasses
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
@@ -113,6 +114,9 @@ sealed class LazyLightClassDataHolder(
         override val clsDelegate: PsiClass by lazyPub { findDelegate(javaFileStub) }
 
         private val dummyDelegate: PsiClass? by lazyPub { inexactStub?.let(findDelegate) }
+
+        override val supertypes: Array<PsiClassType>
+            get() = super.supertypes
 
         override fun getOwnFields(containingClass: KtLightClass): List<KtLightField> {
             if (dummyDelegate == null) return KtLightFieldImpl.fromClsFields(clsDelegate, containingClass)

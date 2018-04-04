@@ -39,6 +39,9 @@ class ParcelableClinitClassBuilderInterceptorExtension : ClassBuilderInterceptor
         return ParcelableClinitClassBuilderFactory(interceptedFactory, bindingContext)
     }
 
+    // TODO: Called from light classes
+    // TODO: PsiClassImplUtil
+    // TODO: PsiSuperMethodUtil
     private inner class ParcelableClinitClassBuilderFactory(
             private val delegateFactory: ClassBuilderFactory,
             val bindingContext: BindingContext
