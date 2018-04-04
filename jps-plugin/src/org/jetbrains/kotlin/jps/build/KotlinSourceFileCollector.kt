@@ -27,9 +27,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.jps.model.kotlinFacetExtension
-import org.jetbrains.kotlin.jps.targetPlatform
 
 import java.io.File
 
@@ -56,9 +54,7 @@ object KotlinSourceFileCollector {
             .getRemovedFiles(target)
             .mapNotNull { if (FileUtilRt.extensionEquals(it, "kt")) File(it) else null }
 
-    fun getAllKotlinSourceFiles(target: ModuleBuildTarget): List<File> {
-        val allKotlinFiles = ArrayList<File>()
-
+    fun getAllKotlinSourceFiles(target: ModuleBuildTarget, allKotlinFiles: ArrayList<File> = ArrayList<File>()): List<File> {
         // add all common libs sources
         addCommonFiles(target, allKotlinFiles)
 
@@ -86,25 +82,28 @@ object KotlinSourceFileCollector {
 
         target.allDependencies.modules.forEach { commonModule ->
             if (commonModule.name in implementedModuleNames) {
-                addModuleSources(commonModule, target, allKotlinFiles)
+                addModuleSources(commonModule, allKotlinFiles, target.isTests)
             }
+//            val targetPlatform = commonModule.targetPlatform
+//            if (targetPlatform == TargetPlatformKind.Common) {
+//                getAllKotlinSourceFiles(commonModule, allKotlinFiles)
+//            }
         }
     }
 
     private fun addModuleSources(
         commonModule: JpsModule,
-        target: ModuleBuildTarget,
-        allKotlinFiles: ArrayList<File>
+        allKotlinFiles: ArrayList<File>,
+        isTests: Boolean
     ) {
         val moduleExcludes = commonModule.excludeRootsList.urls.mapTo(java.util.HashSet(), JpsPathUtil::urlToFile)
 
         val compilerExcludes = JpsJavaExtensionService.getInstance()
-            .getOrCreateCompilerConfiguration(target.module.project)
+            .getOrCreateCompilerConfiguration(commonModule.project)
             .compilerExcludes
 
-        val sourceRootType = if (target.isTests) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
-
-        commonModule.getSourceRoots<JavaSourceRootProperties>(sourceRootType).forEach {
+        val sourceRootType = if (isTests) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
+        commonModule.getSourceRoots(sourceRootType).forEach {
             it.file.walkTopDown()
                 .onEnter { it !in moduleExcludes }
                 .filterTo(allKotlinFiles) {
