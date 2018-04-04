@@ -1,0 +1,21 @@
+// multiplatform module A
+
+ac [common]
+ap1 [jvm]
+ap2 [jvm]
+
+ap1 -> ac [expectedBy]
+ap2 -> ac [expectedBy]
+
+// multiplatform module B (depends on module A)
+
+bc [common]
+bp1 [jvm]
+bp2 [jvm]
+
+bp1 -> bc [expectedBy]
+bp2 -> bc [expectedBy]
+
+bc -> ac [compile]
+bp1 -> ap1 [compile]
+bp2 -> ap2 [compile]

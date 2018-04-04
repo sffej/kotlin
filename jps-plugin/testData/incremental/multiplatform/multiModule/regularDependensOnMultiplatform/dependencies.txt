@@ -1,0 +1,12 @@
+c [common]
+p1 [jvm]
+p2 [jvm]
+
+p1 -> c [expectedBy]
+p2 -> c [expectedBy]
+
+r1 [jvm]
+r1 -> p1 [compile]
+
+r2 [jvm]
+r2 -> p2 [compile]
