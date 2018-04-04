@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.jps.JpsKotlinCompilerSettings
 import org.jetbrains.kotlin.jps.build.JpsJsModuleUtils.getOutputMetaFile
 import org.jetbrains.kotlin.jps.incremental.*
 import org.jetbrains.kotlin.jps.productionOutputFilePath
+import org.jetbrains.kotlin.jps.targetPlatform
 import org.jetbrains.kotlin.jps.testOutputFilePath
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents
@@ -543,7 +544,14 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             LOG.debug("Plugin loaded: ${argumentProvider::class.java.simpleName}")
         }
 
-        if (JpsUtils.isJsKotlinModule(chunk.representativeTarget())) {
+        val targetPlatform = representativeTarget.module.targetPlatform
+        if (targetPlatform == TargetPlatformKind.Common) {
+            return OutputItemsCollector { sourceFiles, outputFile ->
+                // TODO: compile metadata
+            }
+        }
+
+        if (JpsUtils.isJsKotlinModule(representativeTarget)) {
             LOG.debug("Compiling to JS ${filesToCompile.values().size} files in ${filesToCompile.keySet().joinToString { it.presentableName }}")
             return compileToJs(chunk, commonArguments, environment, project)
         }
