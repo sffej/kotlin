@@ -39,18 +39,25 @@ import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.sdk.JpsSdk
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.incremental.CacheVersion
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.testingUtils.*
 import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxt
 import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxtBuilder
+import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxtStubGenerator
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.jps.incremental.withLookupStorage
+import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
+import org.jetbrains.kotlin.jps.model.kotlinFacetExtension
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.Printer
 import java.io.*
@@ -387,13 +394,23 @@ abstract class AbstractIncrementalJpsTest(
             moduleNames = null
         } else {
             dependenciesTxt.modules.forEach {
-                it.jpsModule = addModule(
+                val module = addModule(
                     it.name,
                     arrayOf(getAbsolutePath("${it.name}/src")),
                     null,
                     null,
                     jdk
                 )!!
+
+                val kotlinFacetSettings = it.kotlinFacetSettings
+                if (kotlinFacetSettings != null) {
+                    module.container.setChild(
+                        JpsKotlinFacetModuleExtension.KIND,
+                        JpsKotlinFacetModuleExtension(kotlinFacetSettings)
+                    )
+                }
+
+                it.jpsModule = module
             }
 
             dependenciesTxt.dependencies.forEach {
@@ -405,6 +422,8 @@ abstract class AbstractIncrementalJpsTest(
                 )
             }
 
+            DependenciesTxtStubGenerator(dependenciesTxt, testDataDir).generate()
+
             dependenciesTxt.modules.forEach {
                 prepareModuleSources(it.name)
             }
@@ -415,7 +434,6 @@ abstract class AbstractIncrementalJpsTest(
         AbstractKotlinJpsBuildTestCase.addKotlinTestDependency(myProject)
         return moduleNames
     }
-
 
     protected open fun preProcessSources(srcDir: File) {
     }
