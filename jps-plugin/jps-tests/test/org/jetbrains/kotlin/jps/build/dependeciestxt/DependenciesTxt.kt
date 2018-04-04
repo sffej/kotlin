@@ -5,10 +5,16 @@
 
 package org.jetbrains.kotlin.jps.build.dependeciestxt
 
+import com.sun.tools.classfile.Dependencies
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
+import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.jps.build.dependeciestxt.generated.DependenciesTxtLexer
 import org.jetbrains.kotlin.jps.build.dependeciestxt.generated.DependenciesTxtParser
 import org.jetbrains.kotlin.jps.build.dependeciestxt.generated.DependenciesTxtParser.*
@@ -19,11 +25,16 @@ import java.io.File
  * See [README.md] for more details.
  */
 data class DependenciesTxt(val modules: List<Module>, val dependencies: List<Dependency>) {
-    data class Module(
-        val name: String,
-        val targetPlatform: TargetPlatform
-    ) {
+    data class Module(val name: String) {
+        /**
+         * Facet should not be created for old tests
+         */
+        var kotlinFacetSettings: KotlinFacetSettings? = null
+
         lateinit var jpsModule: JpsModule
+
+        val dependencies = mutableListOf<Dependency>()
+        val usages = mutableListOf<Dependency>()
     }
 
     data class Dependency(
@@ -32,10 +43,11 @@ data class DependenciesTxt(val modules: List<Module>, val dependencies: List<Dep
         val scope: JpsJavaDependencyScope,
         val expectedBy: Boolean,
         val exported: Boolean
-    )
-
-    enum class TargetPlatform {
-        COMMON, JS, JVM
+    ) {
+        init {
+            from.dependencies.add(this)
+            to.usages.add(this)
+        }
     }
 }
 
@@ -48,7 +60,7 @@ class DependenciesTxtBuilder {
      */
     class ModuleRef(name: String) {
         var defined: Boolean = false
-        var actual: DependenciesTxt.Module = DependenciesTxt.Module(name, DependenciesTxt.TargetPlatform.JVM)
+        var actual: DependenciesTxt.Module = DependenciesTxt.Module(name)
     }
 
     /**
@@ -91,24 +103,29 @@ class DependenciesTxtBuilder {
         moduleRef(refNode.ID().text)
 
     fun newModule(def: ModuleDefContext): DependenciesTxt.Module {
-        var platform = DependenciesTxt.TargetPlatform.JVM
+        val name = def.ID().text
+
+        val module = DependenciesTxt.Module(name)
+        val kotlinFacetSettings = KotlinFacetSettings()
+        module.kotlinFacetSettings = kotlinFacetSettings
+
+        val moduleRef = moduleRef(name)
+        check(!moduleRef.defined) { "Module `$name` already defined" }
+        moduleRef.defined = true
+        moduleRef.actual = module
+
         def.attrs().accept { key, value ->
             if (value == null) {
                 when (key) {
-                    "common" -> platform = DependenciesTxt.TargetPlatform.COMMON
-                    "jvm" -> platform = DependenciesTxt.TargetPlatform.JVM
-                    "js" -> platform = DependenciesTxt.TargetPlatform.JS
+                    "common" -> kotlinFacetSettings.compilerArguments = K2MetadataCompilerArguments()
+                    "jvm" -> kotlinFacetSettings.compilerArguments = K2JVMCompilerArguments()
+                    "js" -> kotlinFacetSettings.compilerArguments = K2JSCompilerArguments()
                     else -> error("Unknown module flag `$key`")
                 }
             } else error("Unknown module property `$key`")
         }
 
-        return DependenciesTxt.Module(def.ID().text, platform).also {
-            val moduleRef = moduleRef(it.name)
-            check(!moduleRef.defined) { "Module `${it.name}` already defined" }
-            moduleRef.defined = true
-            moduleRef.actual = it
-        }
+        return module
     }
 
     fun newDependency(def: DependencyDefContext): DependencyBuilder? {

@@ -1,5 +1,9 @@
 grammar DependenciesTxt;
 
+@header {
+package org.jetbrains.kotlin.jps.build.dependeciestxt.generated;
+}
+
 file : (def)* EOF;
 
 def : moduleDef | dependencyDef;

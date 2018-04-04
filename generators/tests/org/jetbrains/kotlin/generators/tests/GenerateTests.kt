@@ -896,6 +896,10 @@ fun main(args: Array<String>) {
             model("incremental/withJava", extension = null, excludeParentDirs = true)
             model("incremental/inlineFunCallSite", extension = null, excludeParentDirs = true)
             model("incremental/classHierarchyAffected", extension = null, excludeParentDirs = true)
+            model(
+                "incremental/multiplatform/multiModule", extension = null, excludeParentDirs = true,
+                testClassName = "MultiplatformMultiModule"
+            )
         }
 
         testClass<AbstractJvmLookupTrackerTest> {
