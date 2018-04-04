@@ -3,4 +3,8 @@ c2 [common]
 
 c2 -> c1 [compile]
 
+p1 [jvm]
+p2 [jvm]
+
 p1 -> c2 [expectedBy]
+p2 -> c2 [expectedBy]
