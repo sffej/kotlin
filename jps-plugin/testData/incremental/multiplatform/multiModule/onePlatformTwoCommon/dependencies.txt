@@ -1,0 +1,8 @@
+c1 [common]
+c2 [common]
+
+p1 -> c1 [expectedBy]
+p1 -> c2 [expectedBy]
+
+p2 -> c1 [expectedBy]
+p2 -> c2 [expectedBy]

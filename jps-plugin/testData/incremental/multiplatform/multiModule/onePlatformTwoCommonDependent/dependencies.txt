@@ -1,0 +1,6 @@
+c1 [common]
+c2 [common]
+
+c2 -> c1 [compile]
+
+p1 -> c2 [expectedBy]
