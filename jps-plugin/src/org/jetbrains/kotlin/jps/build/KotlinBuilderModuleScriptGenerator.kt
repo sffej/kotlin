@@ -31,14 +31,10 @@ import org.jetbrains.jps.incremental.ProjectBuildException
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsSdkDependency
-import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.build.JvmSourceRoot
 import org.jetbrains.kotlin.config.IncrementalCompilation
-import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.jps.build.JpsUtils.getAllDependencies
-import org.jetbrains.kotlin.jps.model.kotlinFacetExtension
 import org.jetbrains.kotlin.jps.productionOutputFilePath
-import org.jetbrains.kotlin.jps.targetPlatform
 import org.jetbrains.kotlin.jps.testOutputFilePath
 import org.jetbrains.kotlin.modules.KotlinModuleXmlBuilder
 import org.jetbrains.kotlin.modules.TargetId
@@ -71,12 +67,13 @@ object KotlinBuilderModuleScriptGenerator {
             val outputDir = getOutputDirSafe(target)
             val friendDirs = getAdditionalOutputDirsWhereInternalsAreVisible(target)
 
-            val moduleSources = ArrayList(
-//                if (IncrementalCompilation.isEnabled())
-//                    sourceFiles.get(target)
-//                else
-                    KotlinSourceFileCollector.getAllKotlinSourceFiles(target)
-            )
+            val moduleSources = mutableListOf<File>().also {
+                if (IncrementalCompilation.isEnabled() && KotlinModuleBuilderTarget(target).expectedBy.isEmpty()) {
+                    it.addAll(sourceFiles.get(target))
+                } else {
+                    KotlinSourceFileCollector.addAllKotlinSourceFiles(it, target)
+                }
+            }
 
             if (moduleSources.size > 0 || hasRemovedFiles) {
                 noSources = false

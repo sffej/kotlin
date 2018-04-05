@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.jps.model.kotlinFacetExtension
 
 import java.io.File
 
@@ -54,62 +53,37 @@ object KotlinSourceFileCollector {
             .getRemovedFiles(target)
             .mapNotNull { if (FileUtilRt.extensionEquals(it, "kt")) File(it) else null }
 
-    fun getAllKotlinSourceFiles(target: ModuleBuildTarget, allKotlinFiles: ArrayList<File> = ArrayList<File>()): List<File> {
+    fun addAllKotlinSourceFiles(
+        receiver: MutableList<File> = mutableListOf(),
+        target: ModuleBuildTarget
+    ): List<File> {
         // add all common libs sources
-        addCommonFiles(target, allKotlinFiles)
-
-        val moduleExcludes = target.module.excludeRootsList.urls.mapTo(HashSet(), JpsPathUtil::urlToFile)
-
-        val compilerExcludes = JpsJavaExtensionService.getInstance()
-            .getOrCreateCompilerConfiguration(target.module.project)
-            .compilerExcludes
-
-        for (sourceRoot in getRelevantSourceRoots(target)) {
-            sourceRoot.file.walkTopDown()
-                .onEnter { it !in moduleExcludes }
-                .filterTo(allKotlinFiles) { !compilerExcludes.isExcluded(it) && it.isFile && isKotlinSourceFile(it) }
+        KotlinModuleBuilderTarget(target).expectedBy.forEach {
+            addModuleSources(receiver, it, target.isTests)
         }
-        return allKotlinFiles
-    }
 
-    private fun addCommonFiles(
-        target: ModuleBuildTarget,
-        allKotlinFiles: ArrayList<File>
-    ) {
-        val kotlinFacetExtension = target.module.kotlinFacetExtension
-        val implementedModuleNames = kotlinFacetExtension?.settings?.implementedModuleNames ?: return
-        if (implementedModuleNames.isEmpty()) return
+        addModuleSources(receiver, target.module, target.isTests)
 
-        target.allDependencies.modules.forEach { commonModule ->
-            if (commonModule.name in implementedModuleNames) {
-                addModuleSources(commonModule, allKotlinFiles, target.isTests)
-            }
-//            val targetPlatform = commonModule.targetPlatform
-//            if (targetPlatform == TargetPlatformKind.Common) {
-//                getAllKotlinSourceFiles(commonModule, allKotlinFiles)
-//            }
-        }
+        return receiver
     }
 
     private fun addModuleSources(
-        commonModule: JpsModule,
-        allKotlinFiles: ArrayList<File>,
+        receiver: MutableList<File>,
+        module: JpsModule,
         isTests: Boolean
     ) {
-        val moduleExcludes = commonModule.excludeRootsList.urls.mapTo(java.util.HashSet(), JpsPathUtil::urlToFile)
+        val moduleExcludes = module.excludeRootsList.urls.mapTo(java.util.HashSet(), JpsPathUtil::urlToFile)
 
         val compilerExcludes = JpsJavaExtensionService.getInstance()
-            .getOrCreateCompilerConfiguration(commonModule.project)
+            .getOrCreateCompilerConfiguration(module.project)
             .compilerExcludes
 
         val sourceRootType = if (isTests) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
-        commonModule.getSourceRoots(sourceRootType).forEach {
+        module.getSourceRoots(sourceRootType).forEach {
             it.file.walkTopDown()
                 .onEnter { it !in moduleExcludes }
-                .filterTo(allKotlinFiles) {
-                    !compilerExcludes.isExcluded(it) && it.isFile && isKotlinSourceFile(
-                        it
-                    )
+                .filterTo(receiver) {
+                    !compilerExcludes.isExcluded(it) && it.isFile && isKotlinSourceFile(it)
                 }
         }
     }

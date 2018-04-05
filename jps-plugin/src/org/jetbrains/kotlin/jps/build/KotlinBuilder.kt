@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.jps.build
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.ContainerUtil
@@ -32,8 +31,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode.*
-import org.jetbrains.jps.incremental.Utils.*
-import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
@@ -71,10 +68,8 @@ import org.jetbrains.kotlin.preloading.ClassCondition
 import org.jetbrains.kotlin.progress.CompilationCanceledException
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import org.jetbrains.kotlin.utils.*
-import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
-import java.io.IOException
 import java.net.URI
 import java.util.*
 import kotlin.collections.HashSet
@@ -634,7 +629,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         val sourceToTarget = HashMap<File, ModuleBuildTarget>()
         if (chunk.targets.size > 1) {
             for (target in chunk.targets) {
-                for (file in KotlinSourceFileCollector.getAllKotlinSourceFiles(target)) {
+                for (file in KotlinSourceFileCollector.addAllKotlinSourceFiles(target = target)) {
                     sourceToTarget[file] = target
                 }
             }
@@ -748,7 +743,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             return null
         }
 
-        val sourceFiles = KotlinSourceFileCollector.getAllKotlinSourceFiles(representativeTarget)
+        val sourceFiles = KotlinSourceFileCollector.addAllKotlinSourceFiles(target = representativeTarget)
         if (sourceFiles.isEmpty()) {
             return null
         }
