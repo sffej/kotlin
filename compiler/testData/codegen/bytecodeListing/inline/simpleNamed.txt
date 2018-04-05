@@ -1,5 +1,5 @@
 @kotlin.Metadata
 public final class SimpleNamedKt {
-    private final static method simple$$forInline(p0: java.lang.Object): java.lang.Object
-    private final static method simple(p0: java.lang.Object): java.lang.Object
+    private final static @org.jetbrains.annotations.Nullable method simple$$forInline(@org.jetbrains.annotations.Nullable p0: java.lang.Object): java.lang.Object
+    public final static @org.jetbrains.annotations.Nullable method simple(@org.jetbrains.annotations.Nullable p0: java.lang.Object): java.lang.Object
 }

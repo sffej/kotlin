@@ -11,13 +11,11 @@ import org.jetbrains.kotlin.codegen.FunctionGenerationStrategy
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.JVMConstructorCallNormalizationMode
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.OtherOrigin
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
-import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 // For named suspend function we generate two methods:
 // 1) to use as noinline function, which have state machine
@@ -41,19 +39,28 @@ class SuspendInlineFunctionGenerationStrategy(
     override fun wrapMethodVisitor(mv: MethodVisitor, access: Int, name: String, desc: String): MethodVisitor {
         if (access and Opcodes.ACC_ABSTRACT != 0) return mv
 
+        var accessForInline = access
+        if (accessForInline and Opcodes.ACC_PUBLIC != 0) {
+            accessForInline = accessForInline xor Opcodes.ACC_PUBLIC
+        }
+        if (accessForInline and Opcodes.ACC_PROTECTED != 0) {
+            accessForInline = accessForInline xor Opcodes.ACC_PROTECTED
+        }
+        accessForInline = accessForInline or Opcodes.ACC_PRIVATE
+
         return MultipleMethodVisitorsDelegate(
             listOf(
                 super.wrapMethodVisitor(mv, access, name, desc),
                 defaultStrategy.wrapMethodVisitor(
                     codegen.newMethod(
                         OtherOrigin(declaration, getOrCreateJvmSuspendFunctionView(originalSuspendDescriptor)),
-                        access,
+                        accessForInline,
                         "$name\$\$forInline",
                         desc,
                         null,
                         null
                     ),
-                    access,
+                    accessForInline,
                     "$name\$\$forInline",
                     desc
                 )
