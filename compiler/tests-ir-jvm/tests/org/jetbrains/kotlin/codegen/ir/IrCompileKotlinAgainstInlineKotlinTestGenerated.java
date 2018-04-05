@@ -3523,6 +3523,12 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
                 String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline/simpleNamed.kt");
                 doTest(fileName);
             }
+
+            @TestMetadata("useAsNoinline.kt")
+            public void testUseAsNoinline() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline/useAsNoinline.kt");
+                doTest(fileName);
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/boxInline/suspend/receiver")

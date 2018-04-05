@@ -41,24 +41,14 @@ class SuspendInlineFunctionGenerationStrategy(
     override fun wrapMethodVisitor(mv: MethodVisitor, access: Int, name: String, desc: String): MethodVisitor {
         if (access and Opcodes.ACC_ABSTRACT != 0) return mv
 
-        var accessForInline = access
-        if (accessForInline and Opcodes.ACC_PUBLIC != 0) {
-            accessForInline = accessForInline xor Opcodes.ACC_PUBLIC
-        }
-        if (accessForInline and Opcodes.ACC_PROTECTED != 0) {
-            accessForInline = accessForInline xor Opcodes.ACC_PROTECTED
-        }
-        accessForInline = accessForInline or Opcodes.ACC_PRIVATE
-
         return MethodNodeCopyingMethodVisitor(
-            mv,
-            accessForInline,
-            name = "$name\$\$forInline",
+            super.wrapMethodVisitor(mv, access, name, desc),
+            access,
+            name,
             desc = desc,
             signature = null,
             exceptions = null,
             codegen = codegen,
-            coroutineTransformer = super.wrapMethodVisitor(mv, access, name, desc),
             declaration = declaration,
             originalSuspendDescriptor = originalSuspendDescriptor
         )
@@ -76,18 +66,37 @@ class SuspendInlineFunctionGenerationStrategy(
         private val desc: String,
         private val signature: String?,
         private val exceptions: Array<out String>?,
-        private val coroutineTransformer: MethodVisitor,
         private val codegen: FunctionCodegen,
         private val declaration: KtFunction,
         private val originalSuspendDescriptor: FunctionDescriptor
-    ) : TransformationMethodVisitor(delegate, access, name, desc, signature, exceptions) {
+    ) : TransformationMethodVisitor(
+        delegate,
+        calculateAccessForInline(access),
+        "$name\$\$forInline",
+        desc,
+        signature,
+        exceptions
+    ) {
         override fun performTransformations(methodNode: MethodNode) {
             val newMethodNode = codegen.newMethod(
                 OtherOrigin(declaration, getOrCreateJvmSuspendFunctionView(originalSuspendDescriptor)),
-                access, name, desc, signature, exceptions
+                calculateAccessForInline(access), "$name\$\$forInline", desc, signature, exceptions
             )
+            methodNode.instructions.resetLabels()
             methodNode.accept(newMethodNode)
-            coroutineTransformer.visitEnd()
+        }
+    }
+
+    companion object {
+        private fun calculateAccessForInline(access: Int): Int {
+            var accessForInline = access
+            if (accessForInline and Opcodes.ACC_PUBLIC != 0) {
+                accessForInline = accessForInline xor Opcodes.ACC_PUBLIC
+            }
+            if (accessForInline and Opcodes.ACC_PROTECTED != 0) {
+                accessForInline = accessForInline xor Opcodes.ACC_PROTECTED
+            }
+            return accessForInline or Opcodes.ACC_PRIVATE
         }
     }
 }
