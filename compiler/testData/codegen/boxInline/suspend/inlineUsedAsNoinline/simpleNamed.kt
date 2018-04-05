@@ -2,16 +2,6 @@
 // WITH_RUNTIME
 // NO_CHECK_LAMBDA_INLINING
 
-inline suspend fun inlineMe() {
-    suspendHere()
-    suspendHere()
-    suspendHere()
-    suspendHere()
-    suspendHere()
-}
-
-// FILE: inlineSite.kt
-
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
@@ -25,6 +15,19 @@ suspend fun suspendHere() = suspendCoroutine<Unit> {
     i++
     proceed = { it.resume(Unit) }
 }
+
+inline suspend fun inlineMe() {
+    suspendHere()
+    suspendHere()
+    suspendHere()
+    suspendHere()
+    suspendHere()
+}
+
+// FILE: inlineSite.kt
+
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 fun builder(c: suspend () -> Unit) {
     val continuation = object: Continuation<Unit> {

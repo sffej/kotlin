@@ -2,6 +2,9 @@
 // WITH_RUNTIME
 // NO_CHECK_LAMBDA_INLINING
 
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
+
 interface I {
     suspend fun bar()
 }
@@ -16,11 +19,6 @@ class A(val v: String) : I {
     }
 }
 
-// FILE: inlineSite.kt
-
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
-
 var continuation: () -> Unit = { }
 var log = ""
 var finished = false
@@ -32,6 +30,11 @@ suspend fun <T> foo(v: T): T = suspendCoroutineOrReturn { x ->
     log += "foo($v);"
     COROUTINE_SUSPENDED
 }
+
+// FILE: inlineSite.kt
+
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 fun builder(c: suspend () -> Unit) {
     val continuation = object: Continuation<Unit> {
