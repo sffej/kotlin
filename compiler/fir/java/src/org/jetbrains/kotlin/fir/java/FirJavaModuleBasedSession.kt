@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.java
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.fir.FirModuleBasedSession
@@ -24,6 +25,22 @@ class FirJavaModuleBasedSession(moduleInfo: ModuleInfo, project: Project) : FirM
                     JavaSourceSymbolProvider(project),
                     FirLibrarySymbolProviderImpl(this),
                     JavaLibrariesSymbolProvider(project)
+                )
+            )
+        )
+    }
+}
+
+class FirJavaIdeBasedSession(moduleInfo: ModuleInfo, module: Module, project: Project) : FirModuleBasedSession(moduleInfo) {
+    init {
+        registerComponent(
+            FirSymbolProvider::class,
+            FirCompositeSymbolProvider(
+                listOf(
+                    service<FirProvider>(),
+                    JavaSourceSymbolProvider(project, module),
+                    FirLibrarySymbolProviderImpl(this),
+                    JavaLibrariesSymbolProvider(project, module)
                 )
             )
         )

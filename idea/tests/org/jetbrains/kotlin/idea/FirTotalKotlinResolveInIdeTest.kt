@@ -14,7 +14,7 @@ import com.intellij.testFramework.ModuleTestCase
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.doFirResolveTestBench
-import org.jetbrains.kotlin.fir.java.FirJavaModuleBasedSession
+import org.jetbrains.kotlin.fir.java.FirJavaIdeBasedSession
 import org.jetbrains.kotlin.fir.resolve.FirProvider
 import org.jetbrains.kotlin.fir.resolve.impl.FirProviderImpl
 import org.jetbrains.kotlin.fir.resolve.transformers.FirTotalResolveTransformer
@@ -49,7 +49,7 @@ class FirTotalKotlinResolveInIdeTest : ModuleTestCase() {
 
     }
 
-    private fun createSession() = FirJavaModuleBasedSession(module.productionSourceInfo()!!, project)
+    private fun createSession() = FirJavaIdeBasedSession(module.productionSourceInfo()!!, module, project)
 
     fun testTotalKotlin() {
         val session = createSession()
