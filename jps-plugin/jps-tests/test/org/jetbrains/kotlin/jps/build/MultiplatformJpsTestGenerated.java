@@ -60,4 +60,10 @@ public class MultiplatformJpsTestGenerated extends AbstractMultiplatformJpsTest 
         String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/simple/");
         doTest(fileName);
     }
+
+    @TestMetadata("simpleJsJvmProjectWithTests")
+    public void testSimpleJsJvmProjectWithTests() throws Exception {
+        String fileName = KotlinTestUtils.navigationMetadata("jps-plugin/testData/incremental/multiplatform/multiModule/simpleJsJvmProjectWithTests/");
+        doTest(fileName);
+    }
 }
