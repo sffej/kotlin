@@ -72,6 +72,6 @@ class FirResolveTestTotalKotlin : AbstractFirResolveWithSessionTestCase() {
 
         println("Raw FIR up, files: ${firFiles.size}")
 
-        doFirResolveTestBench(firFiles, totalTransformer.transformers, project)
+        doFirResolveTestBench(firFiles, totalTransformer.transformers, project, statisticsNeeded = true)
     }
 }

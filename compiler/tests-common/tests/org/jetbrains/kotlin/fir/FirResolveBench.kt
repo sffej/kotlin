@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.fir
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.types.ConeClassErrorType
 import org.jetbrains.kotlin.fir.types.ConeKotlinErrorType
@@ -15,10 +16,18 @@ import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.test.KotlinTestUtils
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.system.measureNanoTime
 
-fun doFirResolveTestBench(firFiles: List<FirFile>, transformers: List<FirTransformer<Nothing?>>, project: Project) {
+fun doFirResolveTestBench(
+    firFiles: List<FirFile>,
+    transformers: List<FirTransformer<Nothing?>>,
+    project: Project,
+    statisticsNeeded: Boolean = false,
+    dumpNeeded: Boolean = false
+) {
 
     System.gc()
 
@@ -44,6 +53,12 @@ fun doFirResolveTestBench(firFiles: List<FirFile>, transformers: List<FirTransfo
                 timePerTransformer.merge(transformer::class, time) { a, b -> a + b }
                 counterPerTransformer.merge(transformer::class, 1) { a, b -> a + b }
                 //totalLength += StringBuilder().apply { FirRenderer(this).visitFile(file) }.length
+
+                if (dumpNeeded) {
+                    val firFileDump = StringBuilder().also { file.accept(FirRenderer(it), null) }.toString()
+                    val expectedPath = (file.psi as? PsiFile)?.virtualFile?.path?.replace(".kt", ".txt")
+                    KotlinTestUtils.assertEqualsToFile(File(expectedPath), firFileDump)
+                }
             }
         }
 
@@ -51,6 +66,9 @@ fun doFirResolveTestBench(firFiles: List<FirFile>, transformers: List<FirTransfo
         println("SUCCESS!")
     } finally {
 
+        if (!statisticsNeeded) {
+            return
+        }
         var implicitTypes = 0
 
 
