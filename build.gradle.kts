@@ -585,12 +585,12 @@ val cidrPlugin by task<Copy> {
 }
 
 val zipCidrPlugin by task<Zip> {
-    val pluginFullVersionNumber = findProperty("pluginVersion") as? String
-            ?: "$kotlinVersion-CIDR"
-    val pluginZipName = "kotlin-plugin-$pluginFullVersionNumber.zip"
+    val destPath = project.findProperty("pluginZipPath") as String?
+            ?: "$distDir/artifacts/kotlin-plugin-$kotlinVersion-CIDR"
+    val destFile = File(destPath)
 
-    destinationDir = File("$distDir/artifacts/")
-    archiveName = pluginZipName
+    destinationDir = destFile.parentFile
+    archiveName = destFile.name
 
     from(cidrPlugin)
     into("Kotlin")
