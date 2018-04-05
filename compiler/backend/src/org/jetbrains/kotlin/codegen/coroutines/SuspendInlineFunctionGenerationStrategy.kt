@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.codegen.coroutines
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.codegen.FunctionCodegen
 import org.jetbrains.kotlin.codegen.FunctionGenerationStrategy
+import org.jetbrains.kotlin.codegen.TransformationMethodVisitor
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.JVMConstructorCallNormalizationMode
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.OtherOrigin
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 // For named suspend function we generate two methods:
 // 1) to use as noinline function, which have state machine
@@ -48,28 +50,44 @@ class SuspendInlineFunctionGenerationStrategy(
         }
         accessForInline = accessForInline or Opcodes.ACC_PRIVATE
 
-        return MultipleMethodVisitorsDelegate(
-            listOf(
-                super.wrapMethodVisitor(mv, access, name, desc),
-                defaultStrategy.wrapMethodVisitor(
-                    codegen.newMethod(
-                        OtherOrigin(declaration, getOrCreateJvmSuspendFunctionView(originalSuspendDescriptor)),
-                        accessForInline,
-                        "$name\$\$forInline",
-                        desc,
-                        null,
-                        null
-                    ),
-                    accessForInline,
-                    "$name\$\$forInline",
-                    desc
-                )
-            )
+        return MethodNodeCopyingMethodVisitor(
+            mv,
+            accessForInline,
+            name = "$name\$\$forInline",
+            desc = desc,
+            signature = null,
+            exceptions = null,
+            codegen = codegen,
+            coroutineTransformer = super.wrapMethodVisitor(mv, access, name, desc),
+            declaration = declaration,
+            originalSuspendDescriptor = originalSuspendDescriptor
         )
     }
 
     override fun doGenerateBody(codegen: ExpressionCodegen, signature: JvmMethodSignature) {
         super.doGenerateBody(codegen, signature)
         defaultStrategy.doGenerateBody(codegen, signature)
+    }
+
+    private class MethodNodeCopyingMethodVisitor(
+        delegate: MethodVisitor,
+        private val access: Int,
+        private val name: String,
+        private val desc: String,
+        private val signature: String?,
+        private val exceptions: Array<out String>?,
+        private val coroutineTransformer: MethodVisitor,
+        private val codegen: FunctionCodegen,
+        private val declaration: KtFunction,
+        private val originalSuspendDescriptor: FunctionDescriptor
+    ) : TransformationMethodVisitor(delegate, access, name, desc, signature, exceptions) {
+        override fun performTransformations(methodNode: MethodNode) {
+            val newMethodNode = codegen.newMethod(
+                OtherOrigin(declaration, getOrCreateJvmSuspendFunctionView(originalSuspendDescriptor)),
+                access, name, desc, signature, exceptions
+            )
+            methodNode.accept(newMethodNode)
+            coroutineTransformer.visitEnd()
+        }
     }
 }

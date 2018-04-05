@@ -124,24 +124,27 @@ public class FunctionCodegen {
 
         if (owner.getContextKind() != OwnerKind.DEFAULT_IMPLS || function.hasBody()) {
             FunctionGenerationStrategy strategy;
-            if (functionDescriptor.isSuspend() && !functionDescriptor.isInline()) {
-                strategy = new SuspendFunctionGenerationStrategy(
-                        state,
-                        CoroutineCodegenUtilKt.<FunctionDescriptor>unwrapInitialDescriptorForSuspendFunction(functionDescriptor),
-                        function,
-                        v.getThisName(),
-                        state.getConstructorCallNormalizationMode()
-                );
-            }
-            else {
-                strategy = new SuspendInlineFunctionGenerationStrategy(
-                        state,
-                        CoroutineCodegenUtilKt.<FunctionDescriptor>unwrapInitialDescriptorForSuspendFunction(functionDescriptor),
-                        function,
-                        v.getThisName(),
-                        state.getConstructorCallNormalizationMode(),
-                        this
-                );
+            if (functionDescriptor.isSuspend()) {
+                if (!functionDescriptor.isInline()) {
+                    strategy = new SuspendFunctionGenerationStrategy(
+                            state,
+                            CoroutineCodegenUtilKt.<FunctionDescriptor>unwrapInitialDescriptorForSuspendFunction(functionDescriptor),
+                            function,
+                            v.getThisName(),
+                            state.getConstructorCallNormalizationMode()
+                    );
+                } else {
+                    strategy = new SuspendInlineFunctionGenerationStrategy(
+                            state,
+                            CoroutineCodegenUtilKt.<FunctionDescriptor>unwrapInitialDescriptorForSuspendFunction(functionDescriptor),
+                            function,
+                            v.getThisName(),
+                            state.getConstructorCallNormalizationMode(),
+                            this
+                    );
+                }
+            } else {
+                strategy = new FunctionGenerationStrategy.FunctionDefault(state, function);
             }
 
             generateMethod(JvmDeclarationOriginKt.OtherOrigin(function, functionDescriptor), functionDescriptor, strategy);

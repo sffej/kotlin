@@ -3510,6 +3510,21 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
             }
         }
 
+        @TestMetadata("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class InlineUsedAsNoinline extends AbstractIrCompileKotlinAgainstInlineKotlinTest {
+            public void testAllFilesPresentInInlineUsedAsNoinline() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            }
+
+            @TestMetadata("simpleNamed.kt")
+            public void testSimpleNamed() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline/simpleNamed.kt");
+                doTest(fileName);
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/boxInline/suspend/receiver")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
