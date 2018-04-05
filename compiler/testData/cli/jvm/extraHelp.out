@@ -7,6 +7,8 @@ where advanced options include:
   -Xcompile-java             Reuse javac analysis and compile Java source files
   -Xnormalize-constructor-calls={disable|enable}
                              Normalize constructor calls (disable: don't normalize; enable: normalize), default is disable
+  -Xdisable-default-scripting-plugin
+                             Do not enable scripting plugin by default
   -Xdump-declarations-to=<path> Path to JSON file to dump Java to Kotlin declaration mappings
   -Xenable-jvm-default       Allow to use '@JvmDefault' for JVM default method support
   -Xmultifile-parts-inherit  Compile multifile classes as a hierarchy of parts and facade
