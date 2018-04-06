@@ -1236,11 +1236,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
 
     @Nullable
     public StackValue genCoroutineInstanceForSuspendLambda(@NotNull FunctionDescriptor suspendFunction) {
-        boolean isLambda = suspendFunction instanceof AnonymousFunctionDescriptor;
-        boolean isLocal = suspendFunction instanceof SimpleFunctionDescriptor &&
-                          suspendFunction.isSuspend() &&
-                          suspendFunction.getVisibility().equals(Visibilities.LOCAL);
-        if (!isLambda && !isLocal) return null;
+        if (!CoroutineCodegenUtilKt.isSuspendLambdaOrLocalFunction(suspendFunction)) return null;
 
         ClassDescriptor suspendLambdaClassDescriptor = bindingContext.get(CodegenBinding.CLASS_FOR_CALLABLE, suspendFunction);
         assert suspendLambdaClassDescriptor != null : "Coroutine class descriptor should not be null";

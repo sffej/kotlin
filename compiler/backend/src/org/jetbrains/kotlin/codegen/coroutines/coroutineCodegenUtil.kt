@@ -26,8 +26,10 @@ import org.jetbrains.kotlin.codegen.inline.addFakeContinuationMarker
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.codegen.topLevelClassInternalName
+import org.jetbrains.kotlin.coroutines.isSuspendLambda
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
@@ -182,8 +184,7 @@ fun ResolvedCall<*>.isSuspendNoInlineCall(codegen: ExpressionCodegen): Boolean {
         ?.let { it.isCrossinline || (!it.isNoinline && codegen.context.functionDescriptor.isInline) } == true
 
     val functionDescriptor = resultingDescriptor as? FunctionDescriptor ?: return false
-    val initial = functionDescriptor.unwrapInitialDescriptorForSuspendFunction()
-    if (!initial.isSuspend) return false
+    if (!functionDescriptor.unwrapInitialDescriptorForSuspendFunction().isSuspend) return false
     if (functionDescriptor.isBuiltInSuspendCoroutineOrReturnInJvm() || functionDescriptor.isBuiltInSuspendCoroutineUninterceptedOrReturnInJvm()) return true
     return !(functionDescriptor.isInline || isInlineLambda)
 }
@@ -441,3 +442,9 @@ fun InstructionAdapter.invokeDoResumeWithUnit(thisName: String) {
 
 fun Method.getImplForOpenMethod(ownerInternalName: String) =
     Method("$name\$suspendImpl", returnType, arrayOf(Type.getObjectType(ownerInternalName)) + argumentTypes)
+
+fun FunctionDescriptor.isSuspendLambdaOrLocalFunction() = this.isSuspend && when (this) {
+    is AnonymousFunctionDescriptor -> this.isSuspendLambda
+    is SimpleFunctionDescriptor -> this.visibility == Visibilities.LOCAL
+    else -> false
+}

@@ -327,11 +327,7 @@ class CoroutineCodegenForLambda private constructor(
                 declaration: KtElement,
                 classBuilder: ClassBuilder
         ): ClosureCodegen? {
-            val suspendLambda = declaration is KtFunctionLiteral && originalSuspendLambdaDescriptor.isSuspendLambda
-            val suspendLocalFunction = declaration is KtNamedFunction &&
-                    originalSuspendLambdaDescriptor.isSuspend &&
-                    originalSuspendLambdaDescriptor.visibility == Visibilities.LOCAL
-            if (!suspendLambda && !suspendLocalFunction) return null
+            if (!originalSuspendLambdaDescriptor.isSuspendLambdaOrLocalFunction()) return null
 
             return CoroutineCodegenForLambda(
                     expressionCodegen,
