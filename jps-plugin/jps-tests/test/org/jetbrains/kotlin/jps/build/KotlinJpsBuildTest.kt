@@ -251,8 +251,8 @@ open class KotlinJpsBuildTest : AbstractKotlinJpsBuildTestCase() {
         val list = arrayListOf<String>()
         for (moduleName in moduleNames) {
             val outputDir = File("out/production/$moduleName")
-            list.add(toSystemIndependentName(JpsJsModuleUtils.getOutputFile(outputDir, moduleName, false).path))
-            list.add(toSystemIndependentName(JpsJsModuleUtils.getOutputMetaFile(outputDir, moduleName, false).path))
+//            list.add(toSystemIndependentName(JpsJsModuleUtils.getOutputFile(outputDir, moduleName, false).path))
+//            list.add(toSystemIndependentName(JpsJsModuleUtils.getOutputMetaFile(outputDir, moduleName, false).path))
 
             val kjsmFiles = File(workDir, outputDir.path).walk()
                 .filter { it.isFile && it.extension.equals("kjsm", ignoreCase = true) }
