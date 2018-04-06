@@ -71,6 +71,11 @@ class K2JVMCompiler : CLICompiler<K2JVMCompilerArguments>() {
         val pluginLoadResult = loadPlugins(paths, arguments, configuration)
         if (pluginLoadResult != ExitCode.OK) return pluginLoadResult
 
+        // If not disabled explicitly, we should always support at least the standard script definition
+        if (!arguments.disableStandardScript) {
+            configuration.add(JVMConfigurationKeys.SCRIPT_DEFINITIONS, StandardScriptDefinition)
+        }
+
         if (!arguments.script && arguments.buildFile == null) {
             for (arg in arguments.freeArgs) {
                 val file = File(arg)

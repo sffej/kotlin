@@ -207,9 +207,6 @@ class KotlinCoreEnvironment private constructor(
         })
         sourceFiles.sortBy { it.virtualFile.path }
 
-        // We should always support at least the standard script definition
-        configuration.add(JVMConfigurationKeys.SCRIPT_DEFINITIONS, StandardScriptDefinition)
-
         val scriptDefinitionProvider = ScriptDefinitionProvider.getInstance(project) as? CliScriptDefinitionProvider
         if (scriptDefinitionProvider != null) {
             scriptDefinitionProvider.setScriptDefinitions(
